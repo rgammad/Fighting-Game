@@ -16,10 +16,15 @@ public class PlayerController : MonoBehaviour
     private float vertical;
     private float jmpF, jmpD;
     private bool jmpKey;
-    private bool falling;
-    private bool onGround;
-    private bool walking;
-    private bool shielding;
+    private bool falling = false;
+    private bool onGround = true;
+    private bool walking = false;
+    private bool shielding = false;
+    private bool[] attack = new bool[2];
+    private float[] attackTimer = new float[2];
+    private int[] timesPressed = new int[2];
+    public float attackRate = .3f;
+
 
     void Start()
     {
@@ -28,6 +33,7 @@ public class PlayerController : MonoBehaviour
     }
     void Update()
     {
+        AttackInput();
         UpdateAnimator();
     }
 
@@ -56,11 +62,18 @@ public class PlayerController : MonoBehaviour
         }
 
         falling = (!onGround && vertical < 0.0f);
-        shielding = (onGround && vertical < 0.0f);
-        if (!shielding)
-            rbody.transform.Translate(movement * moveSpeed * Time.deltaTime);
-        else
+
+        if (Input.GetButton("Shield"))
+        {
+            shielding = true;
             rbody.velocity = Vector2.zero;
+        }
+        else
+        {
+            shielding = false;
+            rbody.transform.Translate(movement * moveSpeed * Time.deltaTime);
+
+        }
         walking = (horizontal != 0);
 
 
@@ -73,8 +86,31 @@ public class PlayerController : MonoBehaviour
         anim.SetBool("Falling", this.falling);
         anim.SetFloat("Movement", horizontal);
         anim.SetBool("walking", walking);
+        anim.SetBool("Attack1", attack[0]);
     }
 
+
+    private void AttackInput()
+    {
+        if (Input.GetButtonDown("Attack1"))
+        {
+            attack[0] = true;
+            attackTimer[0] = 0;
+            timesPressed[0]++;
+        }
+
+        if (attack[0])
+        {
+            attackTimer[0] += Time.deltaTime;
+            if (attackTimer[0] > attackRate || timesPressed[0] >= 4)
+            {
+                attackTimer[0] = 0;
+                attack[0] = false;
+                timesPressed[0] = 0;
+            }
+        }
+
+    }
     private void JumpCD()
     {
         jmpKey = false;
